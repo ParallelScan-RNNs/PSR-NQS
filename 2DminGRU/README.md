@@ -3,7 +3,7 @@
 This folder is self-contained for reproducing the two sets of runs:
 
 1. Cold start (`L=10,16`)
-2. Iterative retraining (`L=6..48` with per-`L` overrides)
+2. Iterative retraining (`L=6..50` with per-`L` overrides)
 
 All required Python source files are copied locally:
 
@@ -47,7 +47,7 @@ Iterative retraining:
 - `--l-min 6 --l-max 50` (run subset)
 - `--base-dir ./TwoDminGRU_iter`
 - `--seed 1`
-- `--no-resume`
+- `--resume` or `--no-resume'
 
 ## Outputs
 
