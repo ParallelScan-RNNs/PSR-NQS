@@ -47,7 +47,7 @@ Iterative retraining:
 - `--l-min 6 --l-max 50` (run subset)
 - `--base-dir ./TwoDminGRU_iter`
 - `--seed 1`
-- `--resume` or `--no-resume'
+- `--no-resume'
 
 ## Outputs
 
