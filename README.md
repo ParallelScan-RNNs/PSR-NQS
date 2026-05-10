@@ -1,1 +1,1 @@
-# Parallel-Scan RNN Wavefunctions
+# ParaRNN Wavefunctions
