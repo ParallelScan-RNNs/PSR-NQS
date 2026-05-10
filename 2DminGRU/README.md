@@ -1,62 +1,99 @@
 # 2D minGRU Reproducibility Repo
 
-This folder is self-contained for reproducing the two sets of runs:
+This folder contains a self-contained implementation for reproducing the 2D minGRU variational Monte Carlo runs.
 
-1. Cold start (`L=10,16`)
-2. Iterative retraining (`L=6..50` with per-`L` overrides)
+## Files
 
-All required Python source files are copied locally:
+- `model.py`: 2D minGRU autoregressive wave-function model.
+- `Helper_functions.py`: local-energy and utility functions.
+- `run_coldstart.py`: cold-start training script. By default it runs the standard cold-start campaign for `L=10` and `L=16`; it can also run a single explicitly specified lattice size.
+- `run_iterative.py`: iterative-retraining script from `L=6` to `L=50`.
+- `requirements.txt`: Python package requirements.
 
-- `run_minGRU_skipconnection.py`
-- `run_minGRU_iterative_retraining.py`
-- `model_skipconnection.py`
-- `Helper_functions.py`
+## Installation
+
+Create and activate a Python environment, then install the required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+The code uses JAX, Flax, and Optax. On GPU systems, install the JAX build appropriate for your CUDA version if needed.
 
 ## Quick start
 
-From this folder:
-
-Dry run (print planned commands/configs):
+From this folder, first run dry runs to print the selected configurations without launching training:
 
 ```bash
 python3 run_coldstart.py --dry-run
 python3 run_iterative.py --dry-run
 ```
 
-Run cold start:
+Run the cold-start calculations:
 
 ```bash
 python3 run_coldstart.py
 ```
 
-Run iterative retraining:
+Run the iterative-retraining calculation:
 
 ```bash
 python3 run_iterative.py
 ```
 
-## Optional flags
+## Useful options
 
-Cold start:
+For cold-start runs:
 
-- `--only-L 10` (or `10,16`)
-- `--num-epochs 1000` (for quick test runs)
+```bash
+python3 run_coldstart.py --only-L 10
+python3 run_coldstart.py --only-L 10,16
+python3 run_coldstart.py --num_epochs 1000
+```
 
-Iterative retraining:
+For a single cold-start training run:
 
-- `--l-min 6 --l-max 50` (run subset)
-- `--base-dir ./TwoDminGRU_iter`
-- `--seed 1`
-- `--no-resume'
+```bash
+python3 run_coldstart.py \
+  --L 10 \
+  --num_layers 6 \
+  --dh 512 \
+  --dmodel 512 \
+  --lr 5e-4 \
+  --lrdecaytime 5000 \
+  --RNNsymmetry c4v \
+  --numsamples 200 \
+  --num_epochs 150000 \
+  --patch_x 2 \
+  --patch_y 2
+```
 
-## Outputs
+For iterative retraining:
 
-Cold-start outputs are written by default under:
+```bash
+python3 run_iterative.py --l-min 6 --l-max 20
+python3 run_iterative.py --base-dir ./TwoDminGRU_iter
+python3 run_iterative.py --seed 1
+python3 run_iterative.py --no-resume
+```
 
-- `./TwoDminGRU/L_<L>/dh_512/numlayers_6/`
+## Output locations
 
-Iterative outputs are written by default under:
+Cold-start outputs are written by default to:
 
-- `./TwoDminGRU_iter/L_<L>/dh_256/numlayers_3/`
+```text
+./TwoDminGRU/L_<L>/dh_512/numlayers_6/
+```
 
+Iterative-retraining outputs are written by default to:
 
+```text
+./TwoDminGRU_iter_repro/L_<L>/dh_256/numlayers_3/
+```
+
+Each output directory contains checkpoints, training traces, and final-energy estimates.
+
+## Notes
+
+- Checkpoints are saved during training and are reused by default when rerunning the same configuration.
+- Use `--no-resume` with `run_iterative.py` to ignore existing iterative checkpoints.
