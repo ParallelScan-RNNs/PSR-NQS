@@ -88,7 +88,7 @@ Cold-start outputs are written by default to:
 Iterative-retraining outputs are written by default to:
 
 ```text
-./TwoDminGRU_iter_repro/L_<L>/dh_256/numlayers_3/
+./TwoDminGRU_iter/L_<L>/dh_256/numlayers_3/
 ```
 
 Each output directory contains checkpoints, training traces, and final-energy estimates.
