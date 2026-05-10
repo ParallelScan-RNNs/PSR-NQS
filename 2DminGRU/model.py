@@ -168,7 +168,6 @@ class TwoDFastGRU(nn.Module):
     def decimal_to_binary(self,decimal_batch, n_bits):
         binary_array = (decimal_batch[:, None] >> jnp.arange(n_bits - 1, -1, -1)) & 1
         return jnp.flip(binary_array, axis=-1)
-        # return binary_array
 
     def __call__(self, inputs):
         """forward pass of the model"""
@@ -229,7 +228,6 @@ class TwoDFastGRU(nn.Module):
         return log_probabilities
 
     def sequential_call(self, samples):
-    # def __call__(self, samples):
         """Sequential call of the model"""
         numsamples, old_Nx, old_Ny = samples.shape
         Nx, Ny = old_Nx//self.patch_x, old_Ny//self.patch_y
@@ -329,7 +327,6 @@ class TwoDFastGRU(nn.Module):
             list_logprobs = self.sequential_call(list_samples)
         else:
             raise ValueError(f"Unknown mode: {mode}")
-        # list_logprobs = self.sequential_call(list_samples)
         
         # Reshape and combine results
         list_logprobs = jnp.reshape(list_logprobs, (group_cardinal, numsamples))
