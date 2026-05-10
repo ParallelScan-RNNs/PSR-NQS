@@ -790,7 +790,7 @@ def select_campaign(l_min: int | None, l_max: int | None) -> list[LConfig]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run iterative-retraining runs from a single file.")
-    parser.add_argument("--base-dir", default="./TwoDminGRU_iter_repro")
+    parser.add_argument("--base-dir", default="./TwoDminGRU_iter")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--l-min", type=int, default=None)
