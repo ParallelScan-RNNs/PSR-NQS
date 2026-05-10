@@ -22,23 +22,6 @@ def matrix_init(key, shape, dtype=sim_dtype, normalization=1):
     return jax.random.normal(key=key, shape=shape, dtype=dtype) / normalization
 ##########
 
-# def unpatch_array_from_one_hot(patched_array, nx, ny):
-#     numsamples, num_classes = patched_array.shape
-    
-#     indices = jnp.argmax(array, axis=1)  # Shape: (numsamples,)
-
-#     # We use jnp.unpackbits on the flattened binary representation.
-#     flattened_binary = jnp.unpackbits(indices.astype(jnp.uint8), axis=-1, bitorder='little')[:, :, :nx * ny]
-    
-#     patch_array = flattened_binary.reshape(numsamples, nx, ny)
-
-#     decoded_array = patch_array.transpose(0, 2, 1, 3).reshape(Lx, Ly)
-
-#     return original_array
-
-
-
-##############
 
 class TwoDFastGRUlayer(nn.Module):
     """
@@ -60,7 +43,6 @@ class TwoDFastGRUlayer(nn.Module):
             jax.nn.initializers.glorot_uniform(),
             (self.d_hidden, self.d_model),
         )
-        # self.normalization = nn.LayerNorm()
 
     def __call__(self, inputs, previous_inputs, previous_hidden_states):
         """Forward pass of a LRU: h_t+1 = lambda * h_t + B x_t+1, y_t = Re[C h_t + D x_t]"""
@@ -71,7 +53,6 @@ class TwoDFastGRUlayer(nn.Module):
         else:
             concatenated_hidden_inputs = jnp.concatenate([inputs,previous_hidden_states], axis = -1)
             concatenated_inputs = inputs
-        # concatenated_inputs =  self.normalization(concatenated_inputs)
 
         gate = jax.vmap(lambda u: self.dense_gate(u) )(concatenated_inputs) 
         gate = jax.nn.sigmoid(gate)
@@ -83,7 +64,7 @@ class TwoDFastGRUlayer(nn.Module):
         Bu_elements = (1. - gate) * transformed_hidden_inputs
         # Compute hidden states
         _, hidden_states = parallel_scan(binary_operator_diag, (Lambda_elements, Bu_elements))
-        # Use them to compute the output of the module
+
         outputs = jax.vmap(lambda h,i: (h @ self.C) + self.dense_inputs(i))(hidden_states, concatenated_inputs)
 
         return outputs, hidden_states
@@ -98,15 +79,13 @@ class TwoDFastGRUlayer(nn.Module):
             concatenated_hidden_inputs = jnp.concatenate([inputs[0],hidden_states[1]], axis = -1)
             concatenated_inputs = inputs[0]
 
-        # concatenated_inputs =  self.normalization(concatenated_inputs)
-
         gate = self.dense_gate(concatenated_inputs)
         gate = jax.nn.sigmoid(gate)
 
         transformed_hidden_inputs =  self.dense(concatenated_hidden_inputs)
 
         new_hidden_state = gate*hidden_states[0] + (1.-gate)*transformed_hidden_inputs 
-        # Use them to compute the output of the module
+
         outputs = new_hidden_state @ self.C + self.dense_inputs(concatenated_inputs)
         return outputs, new_hidden_state
 
@@ -120,8 +99,6 @@ class SequenceLayer(nn.Module):
     def setup(self):
         """Initializes the ssm, layer norm and dropout"""
         self.seq = self.fastGRUlayer
-        # self.out1 = nn.Dense(self.d_model)
-        # self.out2 = nn.Dense(self.d_model)
  
     def __call__(self, inputs, previous_inputs, previous_hidden_states, skip_input):
         x, new_hidden_states = self.seq(inputs, previous_inputs, previous_hidden_states)  # call LRU
@@ -129,14 +106,7 @@ class SequenceLayer(nn.Module):
             x = nn.gelu(x)
         else:
             x = nn.gelu(x + skip_input)
-        # x = self.out1(x) * jax.nn.sigmoid(self.out2(x))  # GLU
-        # x = self.drop(x)
-        # if previous_inputs != None:
-        #     concatenated_inputs = jnp.concatenate([inputs,previous_inputs], axis = -1)
-        #     return self.out3(concatenated_inputs) + x, new_hidden_states  # skip connection
-        # else:
-        #     return self.out3(inputs) + x, new_hidden_states
-        return x, new_hidden_states  #no skip connection
+        return x, new_hidden_states  
 
     def stateful_call(self, inputs, hidden_states, skip_input):
         
@@ -145,14 +115,8 @@ class SequenceLayer(nn.Module):
             x = nn.gelu(x)
         else:
             x = nn.gelu(x + skip_input)
-        # x = self.out1(x) * jax.nn.sigmoid(self.out2(x))  # GLU
-        # x = self.drop(x)
-        # if inputs[1] != None:
-        #     concatenated_inputs = jnp.concatenate([inputs[0],inputs[1]], axis = -1)
-        #     return self.out3(concatenated_inputs) + x, new_hidden_state  # skip connection
-        # else:
-        #     return self.out3(inputs[0]) + x, new_hidden_state
-        return x, new_hidden_state  # no skip connection
+
+        return x, new_hidden_state  
 
 BatchSequenceLayer = nn.vmap(
     SequenceLayer,
@@ -222,9 +186,7 @@ class TwoDFastGRU(nn.Module):
 
         for j in range(Ny):
             if j%2 == 0:
-                # x = self.encoder(padded_inputs[:, :-2, j+1])  # embed input in latent space
                 x = padded_inputs[:, :-2, j+1]  # embed input in latent space
-                # previous_inputs = self.encoder(padded_inputs[:, 1:-1, j])
                 previous_inputs = padded_inputs[:, 1:-1, j]
 
                 for layer_index, layer in enumerate(self.layers):
@@ -241,9 +203,7 @@ class TwoDFastGRU(nn.Module):
                 outputs = x
 
             elif j%2 == 1:
-                # x = self.encoder(padded_inputs[:,::-1][:, :-2, j+1])  # embed input in latent space
                 x = padded_inputs[:,::-1][:, :-2, j+1]  # embed input in latent space
-                # previous_inputs = self.encoder(padded_inputs[:, 1:-1, j])
                 previous_inputs = padded_inputs[:, 1:-1, j]
                 for layer_index, layer in enumerate(self.layers):
                     if layer_index == 0:
@@ -263,9 +223,7 @@ class TwoDFastGRU(nn.Module):
             cond_log_probs = cond_log_probs.at[:, :, j].set(logits)
             previous_inputs = previous_inputs2
 
-        # print(self.binary_to_decimal(patched_inputs).shape)
         transformed_inputs = jax.nn.one_hot(self.binary_to_decimal(patched_inputs), num_classes = self.output_size)
-        # transformed_inputs = transformed_inputs.reshape(numsamples, Nx, Ny, self.output_size)
         log_probabilities = jnp.sum(cond_log_probs * transformed_inputs, axis = (1,2,3))
     
         return log_probabilities
@@ -289,8 +247,6 @@ class TwoDFastGRU(nn.Module):
             for layer_index,layer in enumerate(self.layers):
                 # print(nx, ny, nx-(-1)**ny, ny-1)
                 if layer_index == 0:
-                    # x1 = self.encoder(inputs[layer_index][nx-(-1)**ny][ny])
-                    # x2 = self.encoder(inputs[layer_index][nx][ny-1])
                     x1 = inputs[layer_index][nx-(-1)**ny][ny]
                     x2 = inputs[layer_index][nx][ny-1]
                     skip_input = None
@@ -311,7 +267,6 @@ class TwoDFastGRU(nn.Module):
             inputs[0][nx][ny] = onehot_inputs[:, nx, ny]
             
         transformed_inputs = jax.nn.one_hot(self.binary_to_decimal(patched_inputs), num_classes = self.output_size)
-        # transformed_inputs = transformed_inputs.reshape(numsamples, Nx, Ny, self.output_size)
         log_probabilities = jnp.sum(cond_log_probs * transformed_inputs, axis = (1,2,3))
 
         return log_probabilities
@@ -332,8 +287,6 @@ class TwoDFastGRU(nn.Module):
         for nx,ny in zigzag_path:
             for layer_index,layer in enumerate(self.layers):
                 if layer_index == 0:
-                    # x1 = self.encoder(inputs[layer_index][nx-(-1)**ny][ny])
-                    # x2 = self.encoder(inputs[layer_index][nx][ny-1])
                     # print(nx-(-1)**ny, ny, nx)
                     x1 = inputs[layer_index][nx-(-1)**ny][ny]
                     x2 = inputs[layer_index][nx][ny-1]
@@ -360,7 +313,6 @@ class TwoDFastGRU(nn.Module):
         
         decoded_samples = samples.transpose(0, 1, 3, 2, 4).reshape(numsamples, old_Nx, old_Ny)
         
-        ## Check if samples follow log_probs distribution?
         return decoded_samples
 
     def logprobs_fromsymmetrygroup(self, list_samples, mode="parallel"):
@@ -371,20 +323,6 @@ class TwoDFastGRU(nn.Module):
         # Reshape and concatenate samples
         list_samples = jnp.reshape(jnp.concatenate(list_samples, axis=0), (-1, Nx, Ny))
 
-        ## Multiple GRU support (not working yet)
-        # numgpus = jax.local_device_count()  # Number of available GPUs
-        # numsamplespergpu = list_samples.shape[0] // numgpus
-
-        # Define a function for GPU-specific computation
-        # @partial(jax.pmap, in_axes=(0, None))
-        # def compute_log_probs(samples):
-        #     log_prob = self.__call__(samples)
-        #     return log_probs 
-
-        # Partition samples across GPUs and compute probabilities and phases
-        # gpu_samples = jnp.split(list_samples, numgpus)
-        # list_logprobs = compute_log_probs(gpu_samples)
-
         if mode == "parallel":
             list_logprobs = self.__call__(list_samples)
         elif mode == "sequential":
@@ -394,7 +332,6 @@ class TwoDFastGRU(nn.Module):
         # list_logprobs = self.sequential_call(list_samples)
         
         # Reshape and combine results
-        # list_logprobs = jnp.reshape(jnp.concatenate(list_logprobs, axis=0), (group_cardinal, numsamples)) #only when multiple GPUs are used
         list_logprobs = jnp.reshape(list_logprobs, (group_cardinal, numsamples))
             
         # Compute final log amplitude
@@ -420,28 +357,3 @@ class TwoDFastGRU(nn.Module):
 
         # Call the method to compute the log problems with symmetry
         return self.logprobs_fromsymmetrygroup(list_samples, mode=mode)
-        
-    # def logprobs_c4vsym(self, samples):
-    #     def apply_symmetries(sample):
-    #         return jnp.array([
-    #             sample,
-    #             jnp.rot90(sample, k=-1, axes=(0, 1)),
-    #             jnp.rot90(sample, k=-2, axes=(0, 1)),
-    #             jnp.rot90(sample, k=-3, axes=(0, 1)),
-    #             sample[::-1],  # Flip along rows
-    #             sample[:, ::-1],  # Flip along columns
-    #             jnp.transpose(sample),  # Transpose
-    #             jnp.transpose(jnp.rot90(sample, k=-2, axes=(0, 1)))
-    #         ])
-        
-    #     # Vectorized application of symmetries to all samples
-    #     batch_symmetries = jax.vmap(apply_symmetries)(samples)
-    #     batch_symmetries = batch_symmetries.reshape(-1, samples.shape[1], samples.shape[2])
-        
-    #     return self.logprobs_fromsymmetrygroup(batch_symmetries, 8)
-
-    # def logprobs_fromsymmetrygroup(self, list_samples, group_cardinal):
-    #     log_probs = self.__call__(list_samples)
-    #     log_probs = log_probs.reshape(group_cardinal, -1)
-    #     avg_logprobs = jax.scipy.special.logsumexp(log_probs, axis=0) - jnp.log(group_cardinal)
-    #     return avg_logprobs
