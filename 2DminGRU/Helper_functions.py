@@ -39,7 +39,6 @@ def get_gpu_memory():
 
 
 ############
-# @partial(jax.jit, static_argnums=(6,))
 def local_energy(samples, params, model, log_psi, RNNsymmetry, forward_mode="parallel") -> List[float]:
     """Original bond-by-bond local energy implementation."""
     numsamples,Nx,Ny = samples.shape
