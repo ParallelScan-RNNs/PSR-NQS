@@ -226,8 +226,6 @@ opt_state = optimizer.init(params)
 Nx = L
 Ny = L
 N = Nx*Ny
-# queue_samples = jnp.zeros((2*Nx,Ny,numsamples, Nx,Ny), dtype = sim_dtype)
-# offdiag_logpsi = jnp.zeros((2*N*numsamples), dtype = sim_dtype)
 rng_key = jax.random.key(1)
 
 @partial(jit, static_argnums=(4,5,6,7,8))
