@@ -46,7 +46,6 @@ The following checks are useful for reproducibility and debugging:
 A compact consistency script:
 
 ```bash
-python3 - <<'PY'
 import itertools
 import jax
 import jax.numpy as jnp
@@ -72,7 +71,6 @@ print("parallel/sequential max diff", float(jnp.max(jnp.abs(lp_parallel - lp_seq
 states = jnp.array(list(itertools.product([0, 1], repeat=L * L)), dtype=jnp.int32).reshape(-1, L, L)
 all_lp = model.apply(params, states)
 print("normalization", float(jnp.sum(jnp.exp(all_lp))))
-PY
 ```
 
 The max difference should be near zero, up to float32 roundoff, and the normalization should be close to `1.0`.
