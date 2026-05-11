@@ -143,7 +143,7 @@ Dry run:
 python3 run_iterative.py --dry-run
 ```
 
-Run the default iterative campaign:
+Run the default iterative retraining simulation/campaign:
 
 ```bash
 python3 run_iterative.py
