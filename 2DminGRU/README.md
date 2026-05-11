@@ -198,5 +198,5 @@ Iterative checkpoints are reused by default. If a checkpoint is marked complete,
 ## Practical Reproducibility Notes
 
 - Use `--dry-run` before launching long jobs.
-- Run the numerical sanity checks after changing `model.py`, `Helper_functions.py`, patch sizes, or symmetry code.
+- Run the numerical sanity checks after changing `model.py`, `Helper_functions.py`.
 - Keep `dmodel == dh` unless the model skip-connection projection is changed deliberately.
