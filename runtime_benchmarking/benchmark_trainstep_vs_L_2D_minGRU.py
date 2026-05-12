@@ -12,8 +12,7 @@ import numpy as np
 import optax
 import pandas as pd
 
-from model_skipconnection_opt import TwoDFastGRU # implementation with scan
-# from model_skipconnection import TwoDFastGRU #implemntation with for loops instead of scan, to avoid scan overhead in small L regime
+from runtime_benchmarking.minGRU_2D import TwoDFastGRU # implementation with scan
 
 sim_dtype = jnp.float32
 
