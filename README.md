@@ -1,6 +1,6 @@
 # Parallel Scan Recurrent Neural Quantum States (PSR-NQS)
 
-This repository contains code to reproduce experiments/simulations presented in the paper `Parallel Scan Recurrent Neural Quantum States for Scalable Variational Monte Carlo` (arxiv:2605.XXXXX)
+This repository contains code to reproduce experiments/simulations presented in the paper `Parallel Scan Recurrent Neural Quantum States for Scalable Variational Monte Carlo` (arxiv:2605.13807)
 
 The folders are laid out as
 ```
